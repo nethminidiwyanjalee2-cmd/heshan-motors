@@ -549,21 +549,51 @@ a.nav-link { text-decoration: none; }
   cursor: not-allowed;
 }
 
+.receipt-logo-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 6px;
+  background: transparent;
+}
+
+.receipt-logo {
+  display: block;
+  margin: 0 auto 6px;
+  max-height: 65px;
+  max-width: 65%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  background: transparent;
+  filter: none;
+}
+
 @page {
-  size: A5 portrait;
-  margin: 0;
+  size: auto;
+  margin: 0mm;
 }
 
 @media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    overflow: hidden !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   /* ── 1. Hide everything on the page ── */
   body * {
     visibility: hidden !important;
   }
 
-  /* ── 2. The modal overlay/container create a new stacking context
-     (position:fixed + overflow:auto) that traps position:fixed children.
-     Reset them at print time so .print-area can escape to the page. ── */
+  /* ── 2. Reset modal overlay/container so it does not trap or overflow ── */
   .modal-overlay,
+  .modal-overlay.open,
   .modal {
     position: static !important;
     overflow: visible !important;
@@ -574,30 +604,107 @@ a.nav-link { text-decoration: none; }
     max-width: none !important;
     max-height: none !important;
     padding: 0 !important;
+    margin: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    border: none !important;
   }
 
-  /* ── 3. Stamp the receipt at the top-left of the A5 sheet ── */
+  .modal > h2,
+  .modal-actions,
+  .sidebar,
+  .mobile-topbar,
+  header {
+    display: none !important;
+  }
+
+  /* ── 3. Single-page compact receipt layout ── */
   .print-area,
   .print-area * {
     visibility: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .print-area {
-    position: fixed !important;
-    inset: 0 !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto !important;
     width: 100% !important;
-    height: 100% !important;
-    padding: 10mm !important;
+    max-width: 80mm !important;
+    padding: 4mm 6mm !important;
     box-sizing: border-box !important;
     background: #fff !important;
     color: #000 !important;
+    font-size: 11.5px !important;
+    line-height: 1.25 !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    break-before: avoid !important;
+    break-inside: avoid !important;
   }
 
-  /* ── 4. Make sure modal-actions (Print / New Bill buttons) don't print ── */
-  .modal-actions {
-    display: none !important;
+  .print-area .receipt-logo-wrap {
+    margin-bottom: 4px !important;
+  }
+
+  .print-area .receipt-logo,
+  .print-area img {
+    max-height: 50px !important;
+    margin: 0 auto 4px auto !important;
+    object-fit: contain !important;
+    mix-blend-mode: multiply !important;
+    filter: none !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-area table {
+    width: 100% !important;
+    margin: 6px 0 !important;
+    font-size: 11px !important;
+    border-collapse: collapse !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-area th {
+    padding: 3px 2px !important;
+    font-size: 10.5px !important;
+    border-bottom: 1.5px solid #000 !important;
+    color: #000 !important;
+  }
+
+  .print-area td {
+    padding: 3px 2px !important;
+    font-size: 11px !important;
+    border-bottom: 1px dashed #ccc !important;
+    color: #000 !important;
+  }
+
+  .print-area p {
+    margin: 2px 0 !important;
+    font-size: 11px !important;
+    color: #000 !important;
+  }
+
+  .print-area .total-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    padding: 2px 0 !important;
+    font-size: 11px !important;
+  }
+
+  .print-area .total-row.grand {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    border-top: 1.5px solid #000 !important;
+    border-bottom: 1.5px solid #000 !important;
+    padding: 4px 0 !important;
+    margin-top: 3px !important;
   }
 }
 /* The Log Out button was showing a larger font than the links */
