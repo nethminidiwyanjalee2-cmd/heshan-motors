@@ -88,7 +88,7 @@ export default function Shell({ children }) {
         >
           &#9776;
         </button>
-        <div className="mobile-topbar-title">Gamage Motors</div>
+        <div className="mobile-topbar-title">Heshan Motors</div>
       </header>
 
       {/* Phone only: dark layer behind the open menu, tap to close */}
@@ -118,12 +118,12 @@ export default function Shell({ children }) {
             }
             style={{ cursor: collapsed ? 'pointer' : 'default' }}
           >
-            <div className="brand-mark" title="Gamage Motors">
-              GM
+            <div className="brand-mark" title="Heshan Motors">
+              HM
             </div>
             <div className="brand-info" style={{ minWidth: 0, flex: 1, lineHeight: 1.25 }}>
               <div className="brand-title" style={{ fontSize: '14px', fontWeight: '600' }}>
-                Gamage
+                Heshan
               </div>
               <div className="brand-title" style={{ fontSize: '14px', fontWeight: '600' }}>
                 Motors

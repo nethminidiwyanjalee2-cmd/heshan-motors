@@ -4,8 +4,8 @@ import { ToastProvider } from '@/lib/ui';
 import RegisterSW from '@/components/RegisterSW';
 
 export const metadata = {
-  title: 'Gamage Motors',
-  description: 'Gamage Motors Application',
+  title: 'Heshan Motors',
+  description: 'Heshan Motors Application',
   manifest: '/manifest.json',
 };
 export const viewport = { themeColor: '#2e3440' };
