@@ -2,8 +2,10 @@
 import { useMemo } from 'react';
 import { useItems, useSales } from '@/lib/data';
 import { dayKey, daysAgo, money } from '@/lib/helpers';
+import { useUserRole } from "@/lib/useUserRole";
 
 export default function ReportsPage() {
+  const { loading } = useUserRole();
   const { items } = useItems();
   const sales = useSales(daysAgo(45), dayKey());
 
@@ -26,7 +28,9 @@ export default function ReportsPage() {
   }, [sales]);
 
   const maxVal = Math.max(1, ...daily.map((d) => d.total));
-  const byValue = [...items].sort((a, b) => b.stockQty * b.price - a.stockQty * a.price);
+  const byValue = [...(items || [])].sort((a, b) => b.stockQty * b.price - a.stockQty * a.price);
+
+  if (loading) return <div style={{ padding: 20 }}>Loading Reports...</div>;
 
   return (
     <>
@@ -36,16 +40,16 @@ export default function ReportsPage() {
       <div className="card" style={{ marginBottom: 20 }}>
         <h2 style={{ fontSize: 15, margin: '0 0 6px' }}>Daily Sales (last 14 days)</h2>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 210, paddingTop: 10 }}>
-            {daily.length === 0 && <div className="empty-state">No sales data yet</div>}
-            {daily.map((d) => (
-         <div key={d.day} style={{ flex: '0 1 64px', minWidth: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-         <div title={money(d.total)} className="mini-chart-bar" style={{ width: '100%', height: Math.max(4, (d.total / maxVal) * 150) }} />
-         <div style={{ fontSize: 10, color: 'var(--muted)', writingMode: 'vertical-rl', transform: 'rotate(180deg)', height: 40 }}>
-        {new Date(d.day + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-      </div>
-    </div>
-  ))}
-</div>
+          {daily.length === 0 && <div className="empty-state">No sales data yet</div>}
+          {daily.map((d) => (
+            <div key={d.day} style={{ flex: '0 1 64px', minWidth: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <div title={money(d.total)} className="mini-chart-bar" style={{ width: '100%', height: Math.max(4, (d.total / maxVal) * 150) }} />
+              <div style={{ fontSize: 10, color: 'var(--muted)', writingMode: 'vertical-rl', transform: 'rotate(180deg)', height: 40 }}>
+                {new Date(d.day + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid-2">
@@ -64,7 +68,13 @@ export default function ReportsPage() {
           <table>
             <thead><tr><th>Item</th><th>Stock</th><th>Value</th></tr></thead>
             <tbody>
-              {byValue.map((i) => <tr key={i.id}><td>{i.name}</td><td>{i.stockQty}</td><td>{money(i.stockQty * i.price)}</td></tr>)}
+              {byValue.map((i) => (
+                <tr key={i.id}>
+                  <td>{i.name}</td>
+                  <td>{i.stockQty}</td>
+                  <td>{money(i.stockQty * i.price)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

@@ -7,6 +7,7 @@ import { money, isOilCategory } from '@/lib/helpers';
 import { adjustStock, createItem, deleteItem, updateItem } from '@/lib/actions';
 import Modal from '@/components/Modal';
 import Pagination from '@/components/Pagination';
+import { useUserRole } from "@/lib/useUserRole";
 
 const PAGE_SIZE = 20;
 const EMPTY = {
@@ -81,6 +82,7 @@ const MOCK_ITEMS = [
 ];
 
 export default function InventoryPage() {
+  const { role, loading } = useUserRole();
   const { items, allItems } = useItems();
   const toast = useToast();
   const [localItems, setLocalItems] = useState(MOCK_ITEMS);
@@ -91,6 +93,9 @@ export default function InventoryPage() {
   const [stock, setStock] = useState({ change: '', reason: '' });
   const [barcodeFor, setBarcodeFor] = useState(null);
   const svgRef = useRef(null);
+
+  // Manager හෝ Admin ද යන්න පරීක්ෂා කරන Condition එක
+  const isManager = role === 'manager' || role === 'ADMIN';
 
   // Use Firestore items if loaded and available, otherwise display fallback mock items
   const activeItems = useMemo(() => {
@@ -249,6 +254,8 @@ export default function InventoryPage() {
     w.document.close();
   }
 
+  if (loading) return <div style={{ padding: 20 }}>Loading Inventory...</div>;
+
   return (
     <>
       {/* Inventory Header with top right action button */}
@@ -259,13 +266,17 @@ export default function InventoryPage() {
             Manage your product categories, prices, stock levels and barcodes
           </p>
         </div>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => setForm({ ...EMPTY })}
-        >
-          + Add New Item
-        </button>
+        
+        {/* Manager/Admin සඳහා පමණක් Add New Item Button එක පෙන්වයි */}
+        {isManager && (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setForm({ ...EMPTY })}
+          >
+            + Add New Item
+          </button>
+        )}
       </div>
 
       {/* Toolbar with Search Bar */}
@@ -335,6 +346,7 @@ export default function InventoryPage() {
                   </td>
                   <td style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                      {/* Barcode button එක හැමෝටම (Employee සහ Manager ට) පෙනේ */}
                       <button
                         type="button"
                         className="btn btn-sm btn-secondary"
@@ -342,46 +354,52 @@ export default function InventoryPage() {
                       >
                         Barcode
                       </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-secondary"
-                        onClick={() => {
-                          setStockFor(item);
-                          setStock({ change: '', reason: '' });
-                        }}
-                      >
-                        Stock
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-secondary"
-                        onClick={() => {
-                          const itemIsOil = isOilCategory(item.category, item.name);
-                          setForm({
-                            id: item.id,
-                            name: item.name,
-                            category: item.category || (itemIsOil ? 'Oil' : 'Spare Parts'),
-                            unitType: item.unitType || (itemIsOil ? 'Liters' : ''),
-                            capacity: item.capacity || '',
-                            vehicleType: item.vehicleType || '',
-                            barcode: item.barcode,
-                            price: item.price,
-                            costPrice: item.costPrice,
-                            stockQty: item.stockQty,
-                            reorderLevel: item.reorderLevel,
-                            notes: item.notes || '',
-                          });
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-danger"
-                        onClick={() => remove(item)}
-                      >
-                        Delete
-                      </button>
+
+                      {/* Stock, Edit සහ Delete Buttons පෙන්වන්නේ Manager/Admin හට පමණි */}
+                      {isManager && (
+                        <>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-secondary"
+                            onClick={() => {
+                              setStockFor(item);
+                              setStock({ change: '', reason: '' });
+                            }}
+                          >
+                            Stock
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-secondary"
+                            onClick={() => {
+                              const itemIsOil = isOilCategory(item.category, item.name);
+                              setForm({
+                                id: item.id,
+                                name: item.name,
+                                category: item.category || (itemIsOil ? 'Oil' : 'Spare Parts'),
+                                unitType: item.unitType || (itemIsOil ? 'Liters' : ''),
+                                capacity: item.capacity || '',
+                                vehicleType: item.vehicleType || '',
+                                barcode: item.barcode,
+                                price: item.price,
+                                costPrice: item.costPrice,
+                                stockQty: item.stockQty,
+                                reorderLevel: item.reorderLevel,
+                                notes: item.notes || '',
+                              });
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-danger"
+                            onClick={() => remove(item)}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -393,7 +411,7 @@ export default function InventoryPage() {
         {filtered.length === 0 && (
           <div className="empty-state">
             {activeItems.length === 0
-              ? 'No items yet. Click "+ Add New Item" to get started.'
+              ? 'No items yet.'
               : 'No items match your search.'}
           </div>
         )}
