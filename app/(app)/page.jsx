@@ -3,8 +3,11 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { useItems, useSales } from '@/lib/data';
 import { dayKey, daysAgo, monthStart, money } from '@/lib/helpers';
+import { useUserRole } from "@/lib/useUserRole";
 
 export default function Dashboard() {
+  const { role, loading } = useUserRole(); // User role එක ලබා ගනී
+  const isManager = role === 'manager' || role === 'ADMIN';
   const { items } = useItems();
   const sales = useSales(daysAgo(45), dayKey());
 
@@ -58,7 +61,13 @@ export default function Dashboard() {
           <h2 style={{ fontSize: 15, marginTop: 0 }}>Quick Actions</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <Link href="/billing" className="btn btn-primary">+ Create New Bill</Link>
-            <Link href="/inventory" className="btn btn-secondary">Manage Inventory / Add Item</Link>
+            
+            {/* Role එක අනුව Inventory Link label එක වෙනස් වේ */}
+            <Link href="/inventory" className="btn btn-secondary">
+              {isManager ? 'Manage Inventory / Add Item' : 'View Inventory'}
+            </Link>
+            
+            {/* Manager සහ Employee දෙන්නටම Reports බලන්න පුළුවන් */}
             <Link href="/reports" className="btn btn-secondary">View Sales Reports</Link>
           </div>
           <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 16 }}>

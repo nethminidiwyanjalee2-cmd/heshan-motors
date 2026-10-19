@@ -1,25 +1,33 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { fb } from '@/lib/firebase';
 import { useOnline } from '@/lib/ui';
+import { useUserRole } from "@/lib/useUserRole";
 
-const NAV = [
-  { href: '/', label: 'Dashboard', icon: '\u25A0' },
-  { href: '/billing', label: 'New Bill', icon: '\u{1F4B3}' },
-  { href: '/inventory', label: 'Inventory', icon: '\u{1F4E6}' },
-  { href: '/sales', label: 'Sales History', icon: '\u{1F4CB}' },
-  { href: '/reports', label: 'Reports', icon: '\u{1F4C8}' },
+const ALL_NAV = [
+  { href: '/', label: 'Dashboard', icon: '\u25A0', managerOnly: false },
+  { href: '/billing', label: 'New Bill', icon: '\u{1F4B3}', managerOnly: false },
+  { href: '/inventory', label: 'Inventory', icon: '\u{1F4E6}', managerOnly: false },
+  { href: '/sales', label: 'Sales History', icon: '\u{1F4CB}', managerOnly: false },
+  { href: '/reports', label: 'Reports', icon: '\u{1F4C8}', managerOnly: false },
 ];
 
 export default function Shell({ children }) {
+  const { role } = useUserRole();
+  const isManager = role === "manager" || role === "ADMIN";
   const path = usePathname();
   const router = useRouter();
   const online = useOnline();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false); // phone menu (slide-in drawer)
+
+  // Manager Only links hide කර Employee ට පෙනිය යුතු Navigation links සකස් කිරීම
+  const visibleNav = useMemo(() => {
+    return ALL_NAV.filter((item) => !item.managerOnly || isManager);
+  }, [isManager]);
 
   useEffect(() => {
     try {
@@ -169,8 +177,9 @@ export default function Shell({ children }) {
           </button>
         </div>
 
+        {/* Dynamic ලෙස filter වූ Navigation Links */}
         <nav className="nav">
-          {NAV.map((n) => (
+          {visibleNav.map((n) => (
             <Link
               key={n.href}
               href={n.href}
@@ -185,15 +194,19 @@ export default function Shell({ children }) {
         </nav>
 
         <div className="sidebar-footer">
-          <Link
-            href="/change-password"
-            className={`nav-link ${path === '/change-password' ? 'active' : ''}`}
-            data-tooltip="Change Password"
-            aria-label="Change Password"
-          >
-            <span className="nav-icon">&#9881;</span>
-            <span className="nav-label">Change Password</span>
-          </Link>
+          {/* Change Password එක Manager හට පමණක් පෙන්වයි */}
+          {isManager && (
+            <Link
+              href="/change-password"
+              className={`nav-link ${path === '/change-password' ? 'active' : ''}`}
+              data-tooltip="Change Password"
+              aria-label="Change Password"
+            >
+              <span className="nav-icon">&#9881;</span>
+              <span className="nav-label">Change Password</span>
+            </Link>
+          )}
+
           <button
             type="button"
             className="nav-link"
