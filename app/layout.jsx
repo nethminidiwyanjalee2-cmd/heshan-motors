@@ -5,7 +5,7 @@ import RegisterSW from '@/components/RegisterSW';
 
 export const metadata = {
   title: 'Heshan Motors',
-  description: 'Heshan Motors Application',
+  description: 'Heshan Motors ',
   manifest: '/manifest.json',
 };
 export const viewport = { themeColor: '#2e3440' };
