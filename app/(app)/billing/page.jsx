@@ -281,9 +281,9 @@ export default function BillingPage() {
       <Modal open={!!receipt} width={380}>
         {receipt && (
           <>
-            <h2>Sale Completed ✓</h2>
-            <div className="print-area" style={{ fontSize: 13 }}>
-              <div className="receipt-logo-wrap" style={{ marginBottom: 8 }}>
+            <h2 className="no-print">Sale Completed ✓</h2>
+            <div className="print-area thermal-slip">
+              <div className="receipt-logo-wrap" style={{ marginBottom: 6 }}>
                 <img
                   src="/logo2.jpeg"
                   alt="Heshan Motors Logo"
@@ -291,7 +291,7 @@ export default function BillingPage() {
                   style={{
                     display: 'block',
                     margin: '0 auto',
-                    maxHeight: 65,
+                    maxHeight: 60,
                     maxWidth: '65%',
                     objectFit: 'contain',
                     mixBlendMode: 'multiply',
@@ -303,59 +303,114 @@ export default function BillingPage() {
                   }}
                 />
               </div>
-              <div style={{ borderTop: '1px dashed var(--line)', borderBottom: '1px dashed var(--line)', padding: '6px 0', margin: '6px 0', fontSize: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span><strong>Invoice:</strong> {receipt.invoiceNo}</span>
-                  <span><strong>Date:</strong> {fmtDateTime(receipt.createdAt)}</span>
-                </div>
-                {receipt.customerName && <div style={{ marginTop: 2 }}><strong>Customer:</strong> {receipt.customerName}</div>}
-                <div style={{ marginTop: 2 }}><strong>Payment:</strong> {receipt.paymentMethod}</div>
+
+              <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                <span><strong>INV:</strong> #{receipt.invoiceNo}</span>
+                <span>{fmtDateTime(receipt.createdAt)}</span>
               </div>
-              <table style={{ margin: '8px 0', width: '100%' }}>
+              {receipt.customerName && (
+                <div style={{ fontSize: '11px', marginTop: '2px' }}>
+                  <strong>CUST:</strong> {receipt.customerName}
+                </div>
+              )}
+              <div style={{ fontSize: '11px', marginTop: '2px' }}>
+                <strong>PAYMENT:</strong> {receipt.paymentMethod}
+              </div>
+
+              <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
+
+              <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th style={{ textAlign: 'right' }}>Qty</th>
-                    <th style={{ textAlign: 'right' }}>Price</th>
-                    <th style={{ textAlign: 'right' }}>Amount</th>
+                  <tr style={{ borderBottom: '1px solid #000' }}>
+                    <th style={{ textAlign: 'left', paddingBottom: '3px' }}>Item</th>
+                    <th style={{ textAlign: 'right', paddingBottom: '3px' }}>Qty</th>
+                    <th style={{ textAlign: 'right', paddingBottom: '3px' }}>Price</th>
+                    <th style={{ textAlign: 'right', paddingBottom: '3px' }}>Amt</th>
                   </tr>
                 </thead>
                 <tbody>
                   {receipt.items.map((i, idx) => (
                     <tr key={idx}>
-                      <td>
+                      <td style={{ paddingTop: '3px', paddingBottom: '3px' }}>
                         {i.name}
                         {i.unitType && (
-                          <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+                          <div style={{ fontSize: '9px', color: '#555' }}>
                             {i.unitType}{i.capacity ? ` (${i.capacity})` : ''}
                           </div>
                         )}
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td style={{ textAlign: 'right', verticalAlign: 'top' }}>
                         {i.quantity} {i.unitType ? i.unitType : ''}
                       </td>
-                      <td style={{ textAlign: 'right' }}>{money(i.unitPrice)}</td>
-                      <td style={{ textAlign: 'right' }}>{money(i.lineTotal)}</td>
+                      <td style={{ textAlign: 'right', verticalAlign: 'top' }}>{money(i.unitPrice)}</td>
+                      <td style={{ textAlign: 'right', verticalAlign: 'top' }}>{money(i.lineTotal)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <div className="total-row"><span>Subtotal</span><span>{money(receipt.subtotal)}</span></div>
-              <div className="total-row"><span>Discount</span><span>{money(receipt.discount)}</span></div>
-              <div className="total-row grand"><span>Total</span><span>{money(receipt.totalAmount)}</span></div>
-              <div style={{ borderTop: '1px dashed var(--line)', marginTop: 10, paddingTop: 8, textAlign: 'center' }}>
-                <div style={{ fontWeight: 'bold' }}>Thank you for choosing us. Have a great day!</div>
-                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>Balangoda, Sri Lanka</div>
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>Tel: 070 181 8180 / 077 355 1902</div>
+
+              <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                <span>Subtotal</span>
+                <span>{money(receipt.subtotal)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                <span>Discount</span>
+                <span>{money(receipt.discount)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 'bold', marginTop: '3px' }}>
+                <span>TOTAL</span>
+                <span>{money(receipt.totalAmount)}</span>
+              </div>
+
+              <div style={{ borderTop: '1px dashed #000', marginTop: '8px', paddingTop: '6px', textAlign: 'center' }}>
+                <div style={{ fontWeight: 'bold', fontSize: '11px' }}>Thank you for choosing us!</div>
+                <div style={{ fontSize: '10px', marginTop: '2px' }}>Balangoda, Sri Lanka</div>
+                <div style={{ fontSize: '10px' }}>Tel: 070 181 8180 / 077 355 1902</div>
               </div>
             </div>
-            <div className="modal-actions">
+
+            <div className="modal-actions no-print" style={{ marginTop: 16 }}>
               <button className="btn btn-secondary" onClick={() => window.print()}>Print</button>
               <button className="btn btn-primary" onClick={newBill}>New Bill</button>
             </div>
           </>
         )}
       </Modal>
+
+      {/* Global CSS Force for 80mm Thermal Printer */}
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          .thermal-slip, .thermal-slip * {
+            visibility: visible !important;
+          }
+          .thermal-slip {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 78mm !important;
+            max-width: 78mm !important;
+            padding: 2mm !important;
+            margin: 0 !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            color: #000 !important;
+            background: #fff !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          @page {
+            size: 80mm auto !important;
+            margin: 0mm !important;
+          }
+        }
+      `}</style>
     </>
   );
 }
