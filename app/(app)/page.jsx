@@ -9,7 +9,7 @@ export default function Dashboard() {
   const { role, loading } = useUserRole(); // User role එක ලබා ගනී
   const isManager = role === 'manager' || role === 'ADMIN';
   const { items } = useItems();
-  const sales = useSales(daysAgo(45), dayKey());
+  const sales = useSales(daysAgo(60), dayKey());
 
   const stats = useMemo(() => {
     const today = dayKey();
