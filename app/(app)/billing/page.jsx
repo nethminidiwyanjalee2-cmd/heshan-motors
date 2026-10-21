@@ -272,7 +272,7 @@ export default function BillingPage() {
           <div className="total-row"><span>Discount</span><span>{money(disc)}</span></div>
           <div className="total-row grand"><span>Total</span><span>{money(total)}</span></div>
           <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}
-                  onClick={checkout} disabled={busy}>
+            onClick={checkout} disabled={busy}>
             {busy ? 'Saving…' : 'Complete Sale'}
           </button>
         </div>
@@ -281,7 +281,7 @@ export default function BillingPage() {
       <Modal open={!!receipt} width={380}>
         {receipt && (
           <>
-            <h2 className="no-print">Sale Completed ✓</h2>
+            {/* <h2 className="no-print">Sale Completed ✓</h2> */}
             <div className="print-area thermal-slip">
               <div className="receipt-logo-wrap" style={{ marginBottom: 6 }}>
                 <img
