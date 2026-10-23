@@ -40,10 +40,13 @@ export default function InventoryPage() {
   // Manager හෝ Admin ද යන්න පරීක්ෂා කරන Condition එක
   const isManager = role === 'manager' || role === 'ADMIN';
 
-  // Use Firestore items if loaded and available, otherwise display fallback mock items
+  // FIX 1: Firestore Data සහ Local Stock Changes එකිනෙක Merge කර Table එකට පෙන්වීම
   const activeItems = useMemo(() => {
-    if (items && items.length > 0) return items;
-    return localItems;
+    const baseItems = (items && items.length > 0) ? items : localItems;
+    return baseItems.map((it) => {
+      const localOverride = localItems.find((l) => l.id === it.id);
+      return localOverride ? { ...it, stockQty: localOverride.stockQty } : it;
+    });
   }, [items, localItems]);
 
   const filtered = useMemo(() => {
@@ -77,76 +80,90 @@ export default function InventoryPage() {
 
   const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
-  async function save() {
-    if (!form.name.trim()) return toast('Please enter an item name', 'error');
-    const isOil = form.category === 'Oil' || form.category === 'Lubricants';
-    try {
-      if (form.id) {
-        if (!form.id.startsWith('mock-')) {
-          try {
-            await updateItem(form.id, form);
-          } catch (err) {
-            console.warn('Backend updateItem error, syncing local state:', err);
-          }
-        }
-        setLocalItems((prev) =>
-          prev.map((i) =>
-            i.id === form.id
-              ? {
-                  ...i,
-                  name: form.name.trim(),
-                  category: form.category || 'Spare Parts',
-                  unitType: isOil ? (form.unitType || 'Liters') : '',
-                  capacity: isOil ? (form.capacity || '').trim() : '',
-                  vehicleType: (form.vehicleType || '').trim(),
-                  price: Number(form.price) || 0,
-                  costPrice: Number(form.costPrice) || 0,
-                  reorderLevel: Number(form.reorderLevel) || 5,
-                  notes: (form.notes || '').trim(),
-                }
-              : i
-          )
-        );
-        toast('Item updated', 'success');
-      } else {
-        let newBarcode = form.barcode?.trim();
-        if (!newBarcode) {
-          const maxNum = (activeItems || []).reduce((max, it) => {
-            const m = (it.barcode || '').match(/^SP(\d+)$/);
-            return m ? Math.max(max, parseInt(m[1], 10)) : max;
-          }, 0);
-          newBarcode = `SP${String(maxNum + 1).padStart(5, '0')}`;
-        }
-        const newItem = {
-          id: `item-${Date.now()}`,
-          name: form.name.trim(),
-          category: form.category || 'Spare Parts',
-          unitType: isOil ? (form.unitType || 'Liters') : '',
-          capacity: isOil ? (form.capacity || '').trim() : '',
-          barcode: newBarcode,
-          vehicleType: (form.vehicleType || '').trim(),
-          price: Number(form.price) || 0,
-          costPrice: Number(form.costPrice) || 0,
-          stockQty: Math.trunc(Number(form.stockQty) || 0),
-          reorderLevel: Number(form.reorderLevel) || 5,
-          notes: (form.notes || '').trim(),
-          isActive: true,
-          createdAt: new Date().toISOString(),
-        };
-
-        try {
-          await createItem(allItems, form);
-        } catch (err) {
-          console.warn('Backend createItem error, syncing local state:', err);
-        }
-        setLocalItems((prev) => [newItem, ...prev]);
-        toast('Item added', 'success');
-      }
-      setForm(null);
-    } catch (e) {
-      toast(e.message, 'error');
-    }
+async function save() {
+  // 1. Mandatory Fields පරීක්ෂා කිරීම (Validation)
+  if (!form.name.trim()) {
+    return toast('Please enter an Item Name', 'error');
   }
+
+  if (form.price === '' || form.price === null || isNaN(Number(form.price))) {
+    return toast('Please enter a valid Selling Price', 'error');
+  }
+
+  // අලුතින් Item එකක් Add කරද්දී පමණක් Opening Stock Qty එක අනිවාර්ය කරයි
+  if (!form.id && (form.stockQty === '' || form.stockQty === null || isNaN(Number(form.stockQty)))) {
+    return toast('Please enter an Opening Stock Quantity', 'error');
+  }
+
+  const isOil = form.category === 'Oil' || form.category === 'Lubricants';
+
+  try {
+    if (form.id) {
+      if (!form.id.startsWith('mock-')) {
+        try {
+          await updateItem(form.id, form);
+        } catch (err) {
+          console.warn('Backend updateItem error, syncing local state:', err);
+        }
+      }
+      setLocalItems((prev) =>
+        prev.map((i) =>
+          i.id === form.id
+            ? {
+                ...i,
+                name: form.name.trim(),
+                category: form.category || 'Spare Parts',
+                unitType: isOil ? (form.unitType || 'Liters') : '',
+                capacity: isOil ? (form.capacity || '').trim() : '',
+                vehicleType: (form.vehicleType || '').trim(),
+                price: Number(form.price) || 0,
+                costPrice: Number(form.costPrice) || 0,
+                reorderLevel: Number(form.reorderLevel) || 5,
+                notes: (form.notes || '').trim(),
+              }
+            : i
+        )
+      );
+      toast('Item updated', 'success');
+    } else {
+      let newBarcode = form.barcode?.trim();
+      if (!newBarcode) {
+        const maxNum = (activeItems || []).reduce((max, it) => {
+          const m = (it.barcode || '').match(/^SP(\d+)$/);
+          return m ? Math.max(max, parseInt(m[1], 10)) : max;
+        }, 0);
+        newBarcode = `SP${String(maxNum + 1).padStart(5, '0')}`;
+      }
+      const newItem = {
+        id: `item-${Date.now()}`,
+        name: form.name.trim(),
+        category: form.category || 'Spare Parts',
+        unitType: isOil ? (form.unitType || 'Liters') : '',
+        capacity: isOil ? (form.capacity || '').trim() : '',
+        barcode: newBarcode,
+        vehicleType: (form.vehicleType || '').trim(),
+        price: Number(form.price) || 0,
+        costPrice: Number(form.costPrice) || 0,
+        stockQty: Math.trunc(Number(form.stockQty) || 0),
+        reorderLevel: Number(form.reorderLevel) || 5,
+        notes: (form.notes || '').trim(),
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      };
+
+      try {
+        await createItem(allItems, form);
+      } catch (err) {
+        console.warn('Backend createItem error, syncing local state:', err);
+      }
+      setLocalItems((prev) => [newItem, ...prev]);
+      toast('Item added', 'success');
+    }
+    setForm(null);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
 
   async function remove(item) {
     if (!confirm(`Remove "${item.name}" from inventory?`)) return;
@@ -165,10 +182,12 @@ export default function InventoryPage() {
     }
   }
 
+  // FIX 2: Stock Update කළ විට Table එක සජීවීව Update වන සේ සැකසීම
   async function submitStock() {
     const change = parseInt(stock.change, 10);
-    if (!change) return toast('Enter a quantity to add or remove', 'error');
+    if (isNaN(change) || change === 0) return toast('Enter a valid quantity (+10 or -2)', 'error');
     if (stockFor.stockQty + change < 0) return toast('Stock cannot go below 0', 'error');
+
     try {
       if (!stockFor.id.startsWith('mock-') && !stockFor.id.startsWith('item-')) {
         try {
@@ -177,21 +196,27 @@ export default function InventoryPage() {
           console.warn('Backend adjustStock error, syncing local state:', err);
         }
       }
-      setLocalItems((prev) =>
-        prev.map((i) =>
-          i.id === stockFor.id
-            ? { ...i, stockQty: Math.max(0, i.stockQty + change) }
-            : i
-        )
-      );
-      toast('Stock updated', 'success');
+
+      const newQty = Math.max(0, Number(stockFor.stockQty) + change);
+
+      setLocalItems((prev) => {
+        const exists = prev.some((i) => i.id === stockFor.id);
+        if (exists) {
+          return prev.map((i) =>
+            i.id === stockFor.id ? { ...i, stockQty: newQty } : i
+          );
+        }
+        return [...prev, { ...stockFor, stockQty: newQty }];
+      });
+
+      toast('Stock updated successfully', 'success');
       setStockFor(null);
     } catch (e) {
       toast(e.message, 'error');
     }
   }
 
-  // Barcode Print Function එක නිවැරදි කර ඇත
+  // Barcode Print Function එක
   function printBarcode() {
     if (!svgRef.current) return;
     const svg = svgRef.current.outerHTML;
@@ -530,20 +555,28 @@ export default function InventoryPage() {
                 <label>Selling Price (Rs.)</label>
                 <input
                   type="number"
-                  step="0.01"
+                  min="0"
+                  step="1"
                   placeholder="0.00"
                   value={form.price}
-                  onChange={setF('price')}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/-/g, '');
+                    setForm({ ...form, price: val });
+                  }}
                 />
               </div>
               <div className="field">
                 <label>Cost Price (Rs.)</label>
                 <input
                   type="number"
-                  step="0.01"
+                  min="0"
+                  step="1"
                   placeholder="0.00"
                   value={form.costPrice}
-                  onChange={setF('costPrice')}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/-/g, '');
+                    setForm({ ...form, costPrice: val });
+                  }}
                 />
               </div>
             </div>
@@ -557,19 +590,28 @@ export default function InventoryPage() {
                 </label>
                 <input
                   type="number"
+                  min="0"
                   placeholder="0"
                   value={form.stockQty}
-                  onChange={setF('stockQty')}
-                  disabled={!!form.id}
+                  onChange={(e) => {
+               // Minus (-) ලකුණු සහ අකුරු ඉවත් කර ධන අංක පමණක් ඉතිරි කරයි
+                  const val = e.target.value.replace(/-/g, '');
+                  setForm({ ...form, stockQty: val });
+                }}
+                disabled={!!form.id}
                 />
               </div>
               <div className="field">
                 <label>Reorder Level</label>
                 <input
                   type="number"
+                  min="0"
                   placeholder="5"
                   value={form.reorderLevel}
-                  onChange={setF('reorderLevel')}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/-/g, '');
+                    setForm({ ...form, reorderLevel: val });
+                  }}
                 />
               </div>
             </div>
