@@ -24,63 +24,6 @@ const EMPTY = {
   notes: '',
 };
 
-/*const MOCK_ITEMS = [
-  {
-    id: 'mock-1',
-    name: 'Brake Pad Set - Front',
-    category: 'Spare Parts',
-    barcode: 'SP00001',
-    vehicleType: 'Tuk Tuk',
-    price: 1850,
-    costPrice: 1200,
-    stockQty: 3,
-    reorderLevel: 5,
-    notes: 'Premium ceramic pads',
-    isActive: true,
-  },
-  {
-    id: 'mock-2',
-    name: 'Spark Plug NGK',
-    category: 'Spare Parts',
-    barcode: 'SP00002',
-    vehicleType: 'Bike',
-    price: 650,
-    costPrice: 400,
-    stockQty: 24,
-    reorderLevel: 10,
-    notes: 'Standard fit',
-    isActive: true,
-  },
-  {
-    id: 'mock-3',
-    name: 'Clutch Cable Heavy Duty',
-    category: 'Spare Parts',
-    barcode: 'SP00003',
-    vehicleType: 'Tuk Tuk',
-    price: 950,
-    costPrice: 600,
-    stockQty: 2,
-    reorderLevel: 5,
-    notes: 'OEM replacement',
-    isActive: true,
-  },
-  {
-    id: 'mock-4',
-    name: 'Engine Oil 20W-50',
-    category: 'Oil',
-    unitType: 'Liters',
-    capacity: '1L',
-    barcode: 'SP00004',
-    vehicleType: 'All Vehicles',
-    price: 2400,
-    costPrice: 1800,
-    stockQty: 10,
-    reorderLevel: 8,
-    notes: 'Mineral 4T',
-    isActive: true,
-  },
-];*/
-
 export default function InventoryPage() {
   const { role, loading } = useUserRole();
   const { items, allItems } = useItems();
@@ -122,7 +65,12 @@ export default function InventoryPage() {
   useEffect(() => {
     if (barcodeFor && svgRef.current) {
       JsBarcode(svgRef.current, barcodeFor.barcode, {
-        format: 'CODE128', displayValue: true, height: 70, fontSize: 16, margin: 10, width: 2,
+        format: 'CODE128',
+        displayValue: true,
+        height: 60,
+        fontSize: 14,
+        margin: 5,
+        width: 2,
       });
     }
   }, [barcodeFor]);
@@ -243,14 +191,70 @@ export default function InventoryPage() {
     }
   }
 
+  // Barcode Print Function එක නිවැරදි කර ඇත
   function printBarcode() {
+    if (!svgRef.current) return;
     const svg = svgRef.current.outerHTML;
     const w = window.open('', '_blank');
-    w.document.write(`<html><head><style>
-      @page { margin: 0; } *{margin:0;padding:0;box-sizing:border-box}
-      body{display:flex;align-items:center;justify-content:center;height:100vh}
-      svg{width:100%;height:auto}
-    </style></head><body>${svg}<script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script></body></html>`);
+    w.document.write(`
+      <html>
+        <head>
+          <title>Print Barcode</title>
+          <style>
+            @page {
+              size: 38mm 25mm;
+              margin: 0;
+            }
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body {
+              width: 38mm;
+              height: 25mm;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+              font-family: Arial, sans-serif;
+            }
+            .title {
+              font-size: 8px;
+              font-weight: bold;
+              text-align: center;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              max-width: 36mm;
+              margin-bottom: 2px;
+            }
+            svg {
+              width: 95% !important;
+              height: auto !important;
+              max-height: 16mm;
+            }
+            .price {
+              font-size: 8px;
+              font-weight: bold;
+              margin-top: 1px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="title">${barcodeFor?.name || ''}</div>
+          ${svg}
+          <div class="price">Rs. ${barcodeFor?.price || 0}</div>
+          <script>
+            window.onload = () => {
+              window.print();
+              window.onafterprint = () => window.close();
+            };
+          </script>
+        </body>
+      </html>
+    `);
     w.document.close();
   }
 
@@ -346,7 +350,6 @@ export default function InventoryPage() {
                   </td>
                   <td style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
-                      {/* Barcode button එක හැමෝටම (Employee සහ Manager ට) පෙනේ */}
                       <button
                         type="button"
                         className="btn btn-sm btn-secondary"
@@ -355,7 +358,6 @@ export default function InventoryPage() {
                         Barcode
                       </button>
 
-                      {/* Stock, Edit සහ Delete Buttons පෙන්වන්නේ Manager/Admin හට පමණි */}
                       {isManager && (
                         <>
                           <button
@@ -467,7 +469,6 @@ export default function InventoryPage() {
               </div>
             </div>
 
-            {/* Unit Type & Capacity per Unit appear ONLY for Oil / Lubricants */}
             {(form.category === 'Oil' || form.category === 'Lubricants') && (
               <div
                 className="grid-2"
@@ -635,7 +636,7 @@ export default function InventoryPage() {
           <>
             <h2>{barcodeFor.name}</h2>
             <div style={{ border: '1px solid var(--line)', borderRadius: 8, padding: 10, background: '#fff' }}>
-              <svg ref={svgRef} style={{ width: '100%', height: 'auto' }} />
+              <svg ref={svgRef} style={{ width: '100%', height: '80px' }} />
             </div>
             <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>
               Print this label and stick it on the item / shelf
