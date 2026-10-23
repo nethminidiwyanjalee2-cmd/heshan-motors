@@ -189,15 +189,8 @@ async function save() {
     if (stockFor.stockQty + change < 0) return toast('Stock cannot go below 0', 'error');
 
     try {
-      if (!stockFor.id.startsWith('mock-') && !stockFor.id.startsWith('item-')) {
-        try {
           await adjustStock(stockFor, change, stock.reason);
-        } catch (err) {
-          console.warn('Backend adjustStock error, syncing local state:', err);
-        }
-      }
-
-      const newQty = Math.max(0, Number(stockFor.stockQty) + change);
+          const newQty = Math.max(0, Number(stockFor.stockQty) + change);
 
       setLocalItems((prev) => {
         const exists = prev.some((i) => i.id === stockFor.id);
