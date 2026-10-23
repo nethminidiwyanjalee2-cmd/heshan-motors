@@ -24,7 +24,7 @@ const EMPTY = {
   notes: '',
 };
 
-const MOCK_ITEMS = [
+/*const MOCK_ITEMS = [
   {
     id: 'mock-1',
     name: 'Brake Pad Set - Front',
@@ -79,13 +79,13 @@ const MOCK_ITEMS = [
     notes: 'Mineral 4T',
     isActive: true,
   },
-];
+];*/
 
 export default function InventoryPage() {
   const { role, loading } = useUserRole();
   const { items, allItems } = useItems();
   const toast = useToast();
-  const [localItems, setLocalItems] = useState(MOCK_ITEMS);
+  const [localItems, setLocalItems] = useState([]);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [form, setForm] = useState(null);          // null = closed; otherwise {id?, ...fields}
