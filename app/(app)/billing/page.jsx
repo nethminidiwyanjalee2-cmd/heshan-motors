@@ -291,8 +291,8 @@ export default function BillingPage() {
                   style={{
                     display: 'block',
                     margin: '0 auto',
-                    maxHeight: 120,
-                    maxWidth: '110%',
+                    maxHeight: 180,
+                    maxWidth: '100%',
                     objectFit: 'contain',
                     mixBlendMode: 'multiply',
                     background: 'transparent',
@@ -321,11 +321,17 @@ export default function BillingPage() {
 
               <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
 
-              <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
+              <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                <colgroup>
+                  <col style={{ width: '40%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '24%' }} />
+                  <col style={{ width: '24%' }} />
+                </colgroup>
                 <thead>
                   <tr style={{ borderBottom: '1px solid #000' }}>
                     <th style={{ textAlign: 'left', paddingBottom: '3px' }}>Item</th>
-                    <th style={{ textAlign: 'right', paddingBottom: '3px' }}>Qty</th>
+                    <th style={{ textAlign: 'center', paddingBottom: '3px' }}>Qty</th>
                     <th style={{ textAlign: 'right', paddingBottom: '3px' }}>Price</th>
                     <th style={{ textAlign: 'right', paddingBottom: '3px' }}>Amt</th>
                   </tr>
@@ -336,13 +342,13 @@ export default function BillingPage() {
                       <td style={{ paddingTop: '3px', paddingBottom: '3px' }}>
                         {i.name}
                         {i.unitType && (
-                          <div style={{ fontSize: '9px', color: '#555' }}>
+                          <div style={{ fontSize: '9px', color: '#000' }}>
                             {i.unitType}{i.capacity ? ` (${i.capacity})` : ''}
                           </div>
                         )}
                       </td>
-                      <td style={{ textAlign: 'right', verticalAlign: 'top' }}>
-                        {i.quantity} {i.unitType ? i.unitType : ''}
+                      <td style={{ textAlign: 'center', verticalAlign: 'top' }}>
+                        {i.quantity}
                       </td>
                       <td style={{ textAlign: 'right', verticalAlign: 'top' }}>{money(i.unitPrice)}</td>
                       <td style={{ textAlign: 'right', verticalAlign: 'top' }}>{money(i.lineTotal)}</td>
@@ -374,7 +380,7 @@ export default function BillingPage() {
             </div>
 
             <div className="modal-actions no-print" style={{ marginTop: 16 }}>
-              <button className="btn btn-secondary" onClick={() => window.print()}>Print</button>
+              <button className="btn btn-secondary" onClick={() => { window.focus(); window.print(); }}>Print</button>
               <button className="btn btn-primary" onClick={newBill}>New Bill</button>
             </div>
           </>
@@ -389,6 +395,9 @@ export default function BillingPage() {
           }
           .thermal-slip, .thermal-slip * {
             visibility: visible !important;
+            color: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .thermal-slip {
             position: absolute !important;
