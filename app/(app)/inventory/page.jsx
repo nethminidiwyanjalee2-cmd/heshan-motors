@@ -209,7 +209,7 @@ async function save() {
     }
   }
 
-  // Barcode Print Function — 2-up thermal label roll (80mm wide × 25mm tall per row)
+  // Barcode Print Function — 80mm x 50mm Landscape Thermal Label
   function printBarcode() {
     if (!svgRef.current) return;
 
@@ -221,34 +221,32 @@ async function save() {
     const name = (barcodeFor?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const price = barcodeFor?.price || 0;
 
-    // One label cell — 39mm wide, sitting inside the 80mm roll (2 × 39mm + 2mm gap)
     const labelHTML = `
-      <div class="label">
-        <div class="lbl-title">${name}</div>
-        ${svg}
-        <div class="lbl-price">Rs. ${price}</div>
+      <div class="label-page">
+        <div class="label-container">
+          <div class="label-title">${name}</div>
+          ${svg}
+          <div class="label-price">Rs. ${price}</div>
+        </div>
       </div>`;
 
     const allLabels = Array(copies).fill(labelHTML).join('');
 
     const w = window.open('', '_blank');
+    if (!w) {
+      alert('Please allow pop-ups for this website in your browser settings to print barcode labels.');
+      return;
+    }
+
     w.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Barcode — ${name}</title>
+          <title>Barcode Label — ${name}</title>
           <style>
-            /*
-             * ── THERMAL LABEL ROLL SPECS ──────────────────────────────────────
-             *   Roll width  : 80 mm
-             *   Label height: 25 mm
-             *   Layout      : 2-up (two 39 mm labels + 2 mm centre gap = 80 mm)
-             *   @page size  : full roll width × one label row height
-             * ──────────────────────────────────────────────────────────────────
-             */
             @page {
-              size: 80mm 25mm;   /* full roll width × single label row height */
-              margin: 0mm;       /* zero — thermal driver controls physical feed */
+              size: 80mm 50mm landscape;
+              margin: 0;
             }
 
             *, *::before, *::after {
@@ -256,82 +254,116 @@ async function save() {
               padding: 0;
               box-sizing: border-box;
               -webkit-print-color-adjust: exact;
+              color-adjust: exact;
               print-color-adjust: exact;
             }
 
             html, body {
               width: 80mm;
-              height: 25mm;
-              overflow: hidden;
+              height: 50mm;
+              margin: 0;
+              padding: 0;
               background: #fff;
               font-family: Arial, Helvetica, sans-serif;
             }
 
-            /* ── 2-up row: two 39mm columns, 2mm gap between them ── */
-            .label-grid {
-              display: flex;
-              flex-direction: row;
-              flex-wrap: wrap;          /* new pair starts on next physical label row */
+            .label-page {
+              position: relative;
               width: 80mm;
-              align-content: flex-start;
-              gap: 0mm 2mm;             /* 0 row-gap (break-inside handles it), 2mm col-gap */
+              height: 50mm;
+              page-break-after: always;
+              break-after: page;
+              page-break-inside: avoid;
+              break-inside: avoid;
+              overflow: hidden;
             }
 
-            /*
-             * Each label cell:
-             *  • Exactly 39mm wide  (2 × 39 + 2mm gap = 80mm)
-             *  • Exactly 25mm tall  (one physical sticker)
-             *  • break-inside: avoid  → NEVER split across sticker boundary
-             */
-            .label {
-              width: 39mm;
-              height: 25mm;
+            .label-page:last-child {
+              page-break-after: auto;
+              break-after: auto;
+            }
+
+            .label-container {
+              width: 80mm;
+              height: 50mm;
+              box-sizing: border-box;
               display: flex;
               flex-direction: column;
               align-items: center;
               justify-content: center;
+              padding: 3mm 4mm;
               overflow: hidden;
-              break-inside: avoid;          /* modern browsers */
-              page-break-inside: avoid;     /* legacy fallback */
-              break-before: auto;
-              padding: 1mm;
             }
 
-            .lbl-title {
-              font-size: 7px;
+            .label-container, .label-container * {
+              color: #000000 !important;
+              font-weight: bold !important;
+              -webkit-print-color-adjust: exact;
+              color-adjust: exact;
+              print-color-adjust: exact;
+            }
+
+            .label-title {
+              font-size: 13px;
               font-weight: bold;
-              color: #000;
+              color: #000000;
               text-align: center;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
-              max-width: 37mm;
-              line-height: 1.1;
-              margin-bottom: 0.5mm;
+              max-width: 74mm;
+              line-height: 1.2;
+              margin-bottom: 2mm;
             }
 
-            /* Force the JsBarcode SVG into its cell cleanly */
             svg {
               display: block;
-              width: 37mm !important;
+              width: 90% !important;
+              max-width: 74mm !important;
               height: auto !important;
-              max-height: 14mm !important;
-              max-width: 37mm !important;
+              max-height: 25mm !important;
+              margin: 0 auto;
             }
 
-            .lbl-price {
-              font-size: 7.5px;
+            .label-price {
+              font-size: 14px;
               font-weight: bold;
-              color: #000;
-              margin-top: 0.5mm;
+              color: #000000;
+              margin-top: 2mm;
               text-align: center;
+            }
+
+            @media print {
+              @page {
+                size: 80mm 50mm landscape;
+                margin: 0;
+              }
+
+              body * {
+                visibility: hidden;
+              }
+
+              .label-container, .label-container * {
+                visibility: visible;
+              }
+
+              .label-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 80mm;
+                height: 50mm;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                box-sizing: border-box;
+              }
             }
           </style>
         </head>
         <body>
-          <div class="label-grid">
-            ${allLabels}
-          </div>
+          ${allLabels}
           <script>
             window.onload = function () {
               window.focus();
