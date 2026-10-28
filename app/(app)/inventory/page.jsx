@@ -209,26 +209,65 @@ async function save() {
     }
   }
 
-  // Barcode Print Function එක
+  // Barcode Print Function — supports multiple copies, 2-up thermal label layout
   function printBarcode() {
     if (!svgRef.current) return;
+
+    const copiesStr = window.prompt('How many labels to print?', '1');
+    if (copiesStr === null) return; // cancelled
+    const copies = Math.max(1, Math.min(100, parseInt(copiesStr, 10) || 1));
+
     const svg = svgRef.current.outerHTML;
+    const name = (barcodeFor?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const price = barcodeFor?.price || 0;
+
+    // Build one label cell HTML
+    const labelHTML = `
+      <div class="label">
+        <div class="title">${name}</div>
+        ${svg}
+        <div class="price">Rs. ${price}</div>
+      </div>`;
+
+    // Repeat label HTML for the requested number of copies
+    const allLabels = Array(copies).fill(labelHTML).join('');
+
     const w = window.open('', '_blank');
     w.document.write(`
+      <!DOCTYPE html>
       <html>
         <head>
-          <title>Print Barcode</title>
+          <title>Print Barcode — ${name}</title>
           <style>
+            /* ── Page: match physical label roll width (2-up = 76mm wide, 25mm tall) ── */
             @page {
-              size: 38mm 25mm;
-              margin: 0;
+              size: 76mm 25mm;
+              margin: 0mm;
             }
+
             * {
               margin: 0;
               padding: 0;
               box-sizing: border-box;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
+
             body {
+              width: 76mm;
+              font-family: Arial, sans-serif;
+              background: #fff;
+            }
+
+            /* ── 2-up grid: 2 labels per row, each 38mm × 25mm ── */
+            .label-grid {
+              display: grid;
+              grid-template-columns: 38mm 38mm;
+              grid-auto-rows: 25mm;
+            }
+
+            /* ── Each label cell — NEVER break inside ── */
+            .label {
               width: 38mm;
               height: 25mm;
               display: flex;
@@ -236,36 +275,44 @@ async function save() {
               align-items: center;
               justify-content: center;
               overflow: hidden;
-              font-family: Arial, sans-serif;
+              break-inside: avoid;
+              page-break-inside: avoid;
+              border: 0.2mm solid transparent; /* invisible alignment guide */
             }
+
             .title {
-              font-size: 8px;
+              font-size: 7.5px;
               font-weight: bold;
               text-align: center;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
               max-width: 36mm;
-              margin-bottom: 2px;
+              margin-bottom: 1px;
+              color: #000;
             }
+
             svg {
-              width: 95% !important;
+              width: 94% !important;
               height: auto !important;
-              max-height: 16mm;
+              max-height: 15mm;
             }
+
             .price {
               font-size: 8px;
               font-weight: bold;
               margin-top: 1px;
+              color: #000;
             }
           </style>
         </head>
         <body>
-          <div class="title">${barcodeFor?.name || ''}</div>
-          ${svg}
-          <div class="price">Rs. ${barcodeFor?.price || 0}</div>
+          <div class="label-grid">
+            ${allLabels}
+          </div>
           <script>
             window.onload = () => {
+              window.focus();
               window.print();
               window.onafterprint = () => window.close();
             };
