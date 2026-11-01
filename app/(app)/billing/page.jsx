@@ -321,25 +321,19 @@ export default function BillingPage() {
 
               <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
 
-              <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-                <colgroup>
-                  <col style={{ width: '40%' }} />
-                  <col style={{ width: '12%' }} />
-                  <col style={{ width: '24%' }} />
-                  <col style={{ width: '24%' }} />
-                </colgroup>
+              <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid #000' }}>
                     <th style={{ textAlign: 'left', paddingBottom: '3px' }}>Item</th>
-                    <th style={{ textAlign: 'center', paddingBottom: '3px' }}>Qty</th>
+                    <th style={{ textAlign: 'right', paddingBottom: '3px' }}>Qty</th>
                     <th style={{ textAlign: 'right', paddingBottom: '3px' }}>Price</th>
                     <th style={{ textAlign: 'right', paddingBottom: '3px' }}>Amt</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {receipt.items.map((i, idx) => (
-                    <tr key={idx}>
-                      <td style={{ paddingTop: '3px', paddingBottom: '3px' }}>
+                  {receipt.items.map((i) => (
+                    <tr key={i.categoryId}>
+                      <td style={{ paddingTop: '3px', paddingBottom: '3px', textAlign: 'left' }}>
                         {i.name}
                         {i.unitType && (
                           <div style={{ fontSize: '9px', color: '#000' }}>
@@ -347,11 +341,15 @@ export default function BillingPage() {
                           </div>
                         )}
                       </td>
-                      <td style={{ textAlign: 'center', verticalAlign: 'top' }}>
+                      <td style={{ textAlign: 'right', verticalAlign: 'top' }}>
                         {i.quantity}
                       </td>
-                      <td style={{ textAlign: 'right', verticalAlign: 'top' }}>{money(i.unitPrice)}</td>
-                      <td style={{ textAlign: 'right', verticalAlign: 'top' }}>{money(i.lineTotal)}</td>
+                      <td style={{ textAlign: 'right', verticalAlign: 'top' }}>
+                        {money(i.unitPrice)}
+                      </td>
+                      <td style={{ textAlign: 'right', verticalAlign: 'top' }}>
+                        {money(i.lineTotal)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
