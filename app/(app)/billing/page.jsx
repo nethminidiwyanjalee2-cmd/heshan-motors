@@ -285,13 +285,13 @@ export default function BillingPage() {
             <div className="print-area thermal-slip">
               <div className="receipt-logo-wrap" style={{ marginBottom: 6 }}>
                 <img
-                  src="/logo2.jpeg"
+                  src="/logo2.png"
                   alt="Heshan Motors Logo"
                   className="receipt-logo"
                   style={{
                     display: 'block',
                     margin: '0 auto',
-                    width: '40%',          // receipt පළලෙන් 80% (වැඩි/අඩු කරන්න)
+                    width: '45%',          // receipt පළලෙන් 80% (වැඩි/අඩු කරන්න)
                     height: 'auto',        // proportions රැකෙනවා
                     objectFit: 'contain',
                     mixBlendMode: 'multiply',
