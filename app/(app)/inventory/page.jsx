@@ -209,173 +209,144 @@ async function save() {
     }
   }
 
-  // Barcode Print Function — 80mm x 50mm Landscape Thermal Label
-  function printBarcode() {
-    if (!svgRef.current) return;
 
-    const copiesStr = window.prompt('How many labels to print?', '1');
-    if (copiesStr === null) return; // cancelled
-    const copies = Math.max(1, Math.min(100, parseInt(copiesStr, 10) || 1));
+  // Barcode Print Function — 80mm x 50mm Thermal Label
+function printBarcode() {
+  if (!svgRef.current) return;
 
-    const svg = svgRef.current.outerHTML;
-    const name = (barcodeFor?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const price = barcodeFor?.price || 0;
+  const copiesStr = window.prompt('How many labels to print?', '1');
+  if (copiesStr === null) return; // cancelled
+  const copies = Math.max(1, Math.min(100, parseInt(copiesStr, 10) || 1));
 
-    const labelHTML = `
-      <div class="label-page">
-        <div class="label-container">
-          <div class="label-title">${name}</div>
-          ${svg}
-          <div class="label-price">Rs. ${price}</div>
-        </div>
-      </div>`;
+  const svg = svgRef.current.outerHTML;
+  const name = (barcodeFor?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const price = barcodeFor?.price || 0;
 
-    const allLabels = Array(copies).fill(labelHTML).join('');
+  const labelHTML = `
+    <div class="label-page">
+      <div class="label-container">
+        <div class="label-title">${name}</div>
+        ${svg}
+        <div class="label-price">Rs. ${price}</div>
+      </div>
+    </div>`;
 
-    const w = window.open('', '_blank');
-    if (!w) {
-      alert('Please allow pop-ups for this website in your browser settings to print barcode labels.');
-      return;
-    }
+  const allLabels = Array(copies).fill(labelHTML).join('');
 
-    w.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Barcode Label — ${name}</title>
-          <style>
-            @page {
-              size: 80mm 50mm landscape;
-              margin: 0;
-            }
-
-            *, *::before, *::after {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-              -webkit-print-color-adjust: exact;
-              color-adjust: exact;
-              print-color-adjust: exact;
-            }
-
-            html, body {
-              width: 80mm;
-              height: 50mm;
-              margin: 0;
-              padding: 0;
-              background: #fff;
-              font-family: Arial, Helvetica, sans-serif;
-            }
-
-            .label-page {
-              position: relative;
-              width: 80mm;
-              height: 50mm;
-              page-break-after: always;
-              break-after: page;
-              page-break-inside: avoid;
-              break-inside: avoid;
-              overflow: hidden;
-            }
-
-            .label-page:last-child {
-              page-break-after: auto;
-              break-after: auto;
-            }
-
-            .label-container {
-              width: 80mm;
-              height: 50mm;
-              box-sizing: border-box;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              padding: 3mm 4mm;
-              overflow: hidden;
-            }
-
-            .label-container, .label-container * {
-              color: #000000 !important;
-              font-weight: bold !important;
-              -webkit-print-color-adjust: exact;
-              color-adjust: exact;
-              print-color-adjust: exact;
-            }
-
-            .label-title {
-              font-size: 13px;
-              font-weight: bold;
-              color: #000000;
-              text-align: center;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              max-width: 74mm;
-              line-height: 1.2;
-              margin-bottom: 2mm;
-            }
-
-            svg {
-              display: block;
-              width: 90% !important;
-              max-width: 74mm !important;
-              height: auto !important;
-              max-height: 25mm !important;
-              margin: 0 auto;
-            }
-
-            .label-price {
-              font-size: 14px;
-              font-weight: bold;
-              color: #000000;
-              margin-top: 2mm;
-              text-align: center;
-            }
-
-            @media print {
-              @page {
-                size: 80mm 50mm landscape;
-                margin: 0;
-              }
-
-              body * {
-                visibility: hidden;
-              }
-
-              .label-container, .label-container * {
-                visibility: visible;
-              }
-
-              .label-container {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 80mm;
-                height: 50mm;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                box-sizing: border-box;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          ${allLabels}
-          <script>
-            window.onload = function () {
-              window.focus();
-              window.print();
-              window.onafterprint = function () { window.close(); };
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    w.document.close();
+  const w = window.open('', '_blank');
+  if (!w) {
+    alert('Please allow pop-ups for this website in your browser settings to print barcode labels.');
+    return;
   }
+
+  w.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Barcode Label — ${name}</title>
+        <style>
+          /* FIX 1: landscape ඉවත් කළා */
+          @page {
+            size: 80mm 50mm;
+            margin: 0;
+          }
+
+          *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+          }
+
+          html, body {
+            width: 80mm;
+            background: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+          }
+
+          .label-page {
+            position: relative;
+            width: 80mm;
+            height: 50mm;
+            page-break-after: always;
+            break-after: page;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            overflow: hidden;
+          }
+
+          /* FIX 2: last-child වෙනුවට last-of-type */
+          .label-page:last-of-type {
+            page-break-after: auto;
+            break-after: auto;
+          }
+
+          .label-container {
+            width: 80mm;
+            height: 50mm;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3mm 4mm;
+            overflow: hidden;
+          }
+
+          .label-container, .label-container * {
+            color: #000000 !important;
+            font-weight: bold !important;
+          }
+
+          .label-title {
+            font-size: 13px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 74mm;
+            line-height: 1.2;
+            margin-bottom: 2mm;
+          }
+
+          svg {
+            display: block;
+            width: 90% !important;
+            max-width: 74mm !important;
+            height: auto !important;
+            max-height: 25mm !important;
+            margin: 0 auto;
+          }
+
+          .label-price {
+            font-size: 14px;
+            margin-top: 2mm;
+            text-align: center;
+          }
+
+          @media print {
+            @page {
+              size: 80mm 50mm;  /* FIX 1: මෙතනත් landscape ඉවත් කළා */
+              margin: 0;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        ${allLabels}
+        <script>
+          window.onload = function () {
+            window.onafterprint = function () { window.close(); };
+            window.focus();
+            window.print();
+          };
+        </script>
+      </body>
+    </html>
+  `);
+  w.document.close();
+}
 
   if (loading) return <div style={{ padding: 20 }}>Loading Inventory...</div>;
 
