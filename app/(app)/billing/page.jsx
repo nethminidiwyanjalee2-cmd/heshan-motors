@@ -291,8 +291,8 @@ export default function BillingPage() {
                   style={{
                     display: 'block',
                     margin: '0 auto',
-                    maxHeight: 180,
-                    maxWidth: '100%',
+                    maxHeight: 130,
+                    maxWidth: '120%',
                     objectFit: 'contain',
                     mixBlendMode: 'multiply',
                     background: 'transparent',
@@ -388,17 +388,17 @@ export default function BillingPage() {
       </Modal>
 
       {/* Global CSS Force for 80mm Thermal Printer */}
+    
       <style jsx global>{`
         @media print {
           body * {
             visibility: hidden !important;
           }
+
           .thermal-slip, .thermal-slip * {
             visibility: visible !important;
-            color: #000 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
           }
+
           .thermal-slip {
             position: absolute !important;
             left: 0 !important;
@@ -408,12 +408,49 @@ export default function BillingPage() {
             padding: 2mm !important;
             margin: 0 !important;
             font-family: 'Courier New', Courier, monospace !important;
-            color: #000 !important;
+            color: #000000 !important;
+            font-weight: 700 !important;
             background: #fff !important;
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
+
+          /* receipt එකේ හැම text එකක්ම කළු සහ bold */
+          .thermal-slip,
+          .thermal-slip *,
+          .thermal-slip p,
+          .thermal-slip span,
+          .thermal-slip td,
+          .thermal-slip th,
+          .thermal-slip div {
+            color: #000000 !important;
+            font-weight: 700 !important;
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          .thermal-slip table {
+            width: 100% !important;
+            color: #000000 !important;
+          }
+
+          .thermal-slip th {
+            font-weight: 900 !important;
+            color: #000000 !important;
+            border-bottom: 1.5px solid #000000 !important;
+          }
+
+          .thermal-slip td {
+            font-weight: 700 !important;
+            color: #000000 !important;
+          }
+
           .no-print {
             display: none !important;
           }
+
           @page {
             size: 80mm auto !important;
             margin: 0mm !important;
