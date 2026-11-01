@@ -291,7 +291,7 @@ export default function BillingPage() {
                   style={{
                     display: 'block',
                     margin: '0 auto',
-                    maxHeight: 130,
+                    maxHeight: 140,
                     maxWidth: '120%',
                     objectFit: 'contain',
                     mixBlendMode: 'multiply',
