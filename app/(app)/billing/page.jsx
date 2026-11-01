@@ -291,8 +291,8 @@ export default function BillingPage() {
                   style={{
                     display: 'block',
                     margin: '0 auto',
-                    maxHeight: 140,
-                    maxWidth: '120%',
+                    width: '80%',          // receipt පළලෙන් 80% (වැඩි/අඩු කරන්න)
+                    height: 'auto',        // proportions රැකෙනවා
                     objectFit: 'contain',
                     mixBlendMode: 'multiply',
                     background: 'transparent',
@@ -388,7 +388,7 @@ export default function BillingPage() {
       </Modal>
 
       {/* Global CSS Force for 80mm Thermal Printer */}
-    
+
       <style jsx global>{`
         @media print {
           body * {
