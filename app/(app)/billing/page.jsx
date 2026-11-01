@@ -291,7 +291,7 @@ export default function BillingPage() {
                   style={{
                     display: 'block',
                     margin: '0 auto',
-                    width: '45%',          // receipt පළලෙන් 80% (වැඩි/අඩු කරන්න)
+                    width: '52%',          // receipt පළලෙන් 80% (වැඩි/අඩු කරන්න)
                     height: 'auto',        // proportions රැකෙනවා
                     objectFit: 'contain',
                     mixBlendMode: 'multiply',
