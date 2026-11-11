@@ -8,6 +8,7 @@ import { adjustStock, createItem, deleteItem, updateItem } from '@/lib/actions';
 import Modal from '@/components/Modal';
 import Pagination from '@/components/Pagination';
 import { useUserRole } from "@/lib/useUserRole";
+import { DEFAULT_LABEL, loadLabelSettings, normalizeLabel, printLabels, saveLabelSettings } from '@/lib/labelPrint';
 
 const PAGE_SIZE = 20;
 const EMPTY = {
@@ -36,6 +37,11 @@ export default function InventoryPage() {
   const [stock, setStock] = useState({ change: '', reason: '' });
   const [barcodeFor, setBarcodeFor] = useState(null);
   const svgRef = useRef(null);
+  const [labelCfg, setLabelCfg] = useState(DEFAULT_LABEL);
+  const [labelCopies, setLabelCopies] = useState('1');
+
+  // Label size is saved per device (each PC has its own printer and roll)
+  useEffect(() => { setLabelCfg(loadLabelSettings()); }, []);
 
   // Manager හෝ Admin ද යන්න පරීක්ෂා කරන Condition එක
   const isManager = role === 'manager' || role === 'ADMIN';
@@ -80,36 +86,36 @@ export default function InventoryPage() {
 
   const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
-async function save() {
-  // 1. Mandatory Fields පරීක්ෂා කිරීම (Validation)
-  if (!form.name.trim()) {
-    return toast('Please enter an Item Name', 'error');
-  }
+  async function save() {
+    // 1. Mandatory Fields පරීක්ෂා කිරීම (Validation)
+    if (!form.name.trim()) {
+      return toast('Please enter an Item Name', 'error');
+    }
 
-  if (form.price === '' || form.price === null || isNaN(Number(form.price))) {
-    return toast('Please enter a valid Selling Price', 'error');
-  }
+    if (form.price === '' || form.price === null || isNaN(Number(form.price))) {
+      return toast('Please enter a valid Selling Price', 'error');
+    }
 
-  // අලුතින් Item එකක් Add කරද්දී පමණක් Opening Stock Qty එක අනිවාර්ය කරයි
-  if (!form.id && (form.stockQty === '' || form.stockQty === null || isNaN(Number(form.stockQty)))) {
-    return toast('Please enter an Opening Stock Quantity', 'error');
-  }
+    // අලුතින් Item එකක් Add කරද්දී පමණක් Opening Stock Qty එක අනිවාර්ය කරයි
+    if (!form.id && (form.stockQty === '' || form.stockQty === null || isNaN(Number(form.stockQty)))) {
+      return toast('Please enter an Opening Stock Quantity', 'error');
+    }
 
-  const isOil = form.category === 'Oil' || form.category === 'Lubricants';
+    const isOil = form.category === 'Oil' || form.category === 'Lubricants';
 
-  try {
-    if (form.id) {
-      if (!form.id.startsWith('mock-')) {
-        try {
-          await updateItem(form.id, form);
-        } catch (err) {
-          console.warn('Backend updateItem error, syncing local state:', err);
+    try {
+      if (form.id) {
+        if (!form.id.startsWith('mock-')) {
+          try {
+            await updateItem(form.id, form);
+          } catch (err) {
+            console.warn('Backend updateItem error, syncing local state:', err);
+          }
         }
-      }
-      setLocalItems((prev) =>
-        prev.map((i) =>
-          i.id === form.id
-            ? {
+        setLocalItems((prev) =>
+          prev.map((i) =>
+            i.id === form.id
+              ? {
                 ...i,
                 name: form.name.trim(),
                 category: form.category || 'Spare Parts',
@@ -121,49 +127,49 @@ async function save() {
                 reorderLevel: Number(form.reorderLevel) || 5,
                 notes: (form.notes || '').trim(),
               }
-            : i
-        )
-      );
-      toast('Item updated', 'success');
-    } else {
-      let newBarcode = form.barcode?.trim();
-      if (!newBarcode) {
-        const maxNum = (activeItems || []).reduce((max, it) => {
-          const m = (it.barcode || '').match(/^SP(\d+)$/);
-          return m ? Math.max(max, parseInt(m[1], 10)) : max;
-        }, 0);
-        newBarcode = `SP${String(maxNum + 1).padStart(5, '0')}`;
-      }
-      const newItem = {
-        id: `item-${Date.now()}`,
-        name: form.name.trim(),
-        category: form.category || 'Spare Parts',
-        unitType: isOil ? (form.unitType || 'Liters') : '',
-        capacity: isOil ? (form.capacity || '').trim() : '',
-        barcode: newBarcode,
-        vehicleType: (form.vehicleType || '').trim(),
-        price: Number(form.price) || 0,
-        costPrice: Number(form.costPrice) || 0,
-        stockQty: Math.trunc(Number(form.stockQty) || 0),
-        reorderLevel: Number(form.reorderLevel) || 5,
-        notes: (form.notes || '').trim(),
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      };
+              : i
+          )
+        );
+        toast('Item updated', 'success');
+      } else {
+        let newBarcode = form.barcode?.trim();
+        if (!newBarcode) {
+          const maxNum = (activeItems || []).reduce((max, it) => {
+            const m = (it.barcode || '').match(/^SP(\d+)$/);
+            return m ? Math.max(max, parseInt(m[1], 10)) : max;
+          }, 0);
+          newBarcode = `SP${String(maxNum + 1).padStart(5, '0')}`;
+        }
+        const newItem = {
+          id: `item-${Date.now()}`,
+          name: form.name.trim(),
+          category: form.category || 'Spare Parts',
+          unitType: isOil ? (form.unitType || 'Liters') : '',
+          capacity: isOil ? (form.capacity || '').trim() : '',
+          barcode: newBarcode,
+          vehicleType: (form.vehicleType || '').trim(),
+          price: Number(form.price) || 0,
+          costPrice: Number(form.costPrice) || 0,
+          stockQty: Math.trunc(Number(form.stockQty) || 0),
+          reorderLevel: Number(form.reorderLevel) || 5,
+          notes: (form.notes || '').trim(),
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        };
 
-      try {
-        await createItem(allItems, form);
-      } catch (err) {
-        console.warn('Backend createItem error, syncing local state:', err);
+        try {
+          await createItem(allItems, form);
+        } catch (err) {
+          console.warn('Backend createItem error, syncing local state:', err);
+        }
+        setLocalItems((prev) => [newItem, ...prev]);
+        toast('Item added', 'success');
       }
-      setLocalItems((prev) => [newItem, ...prev]);
-      toast('Item added', 'success');
+      setForm(null);
+    } catch (e) {
+      toast(e.message, 'error');
     }
-    setForm(null);
-  } catch (e) {
-    toast(e.message, 'error');
   }
-}
 
   async function remove(item) {
     if (!confirm(`Remove "${item.name}" from inventory?`)) return;
@@ -189,8 +195,8 @@ async function save() {
     if (stockFor.stockQty + change < 0) return toast('Stock cannot go below 0', 'error');
 
     try {
-          await adjustStock(stockFor, change, stock.reason);
-          const newQty = Math.max(0, Number(stockFor.stockQty) + change);
+      await adjustStock(stockFor, change, stock.reason);
+      const newQty = Math.max(0, Number(stockFor.stockQty) + change);
 
       setLocalItems((prev) => {
         const exists = prev.some((i) => i.id === stockFor.id);
@@ -210,143 +216,20 @@ async function save() {
   }
 
 
-  // Barcode Print Function — 80mm x 50mm Thermal Label
-function printBarcode() {
-  if (!svgRef.current) return;
-
-  const copiesStr = window.prompt('How many labels to print?', '1');
-  if (copiesStr === null) return; // cancelled
-  const copies = Math.max(1, Math.min(100, parseInt(copiesStr, 10) || 1));
-
-  const svg = svgRef.current.outerHTML;
-  const name = (barcodeFor?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const price = barcodeFor?.price || 0;
-
-  const labelHTML = `
-    <div class="label-page">
-      <div class="label-container">
-        <div class="label-title">${name}</div>
-        ${svg}
-        <div class="label-price">Rs. ${price}</div>
-      </div>
-    </div>`;
-
-  const allLabels = Array(copies).fill(labelHTML).join('');
-
-  const w = window.open('', '_blank');
-  if (!w) {
-    alert('Please allow pop-ups for this website in your browser settings to print barcode labels.');
-    return;
+  // Barcode label printing — label size is saved on this device (see lib/labelPrint.js)
+  function printBarcode() {
+    if (!barcodeFor) return;
+    const settings = normalizeLabel(labelCfg);
+    setLabelCfg(settings);
+    saveLabelSettings(settings);
+    printLabels({
+      name: barcodeFor.name,
+      price: barcodeFor.price || 0,
+      barcode: barcodeFor.barcode,
+      copies: labelCopies,
+      settings,
+    });
   }
-
-  w.document.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Barcode Label — ${name}</title>
-        <style>
-          /* FIX 1: landscape ඉවත් කළා */
-          @page {
-            size: 80mm 50mm;
-            margin: 0;
-          }
-
-          *, *::before, *::after {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-print-color-adjust: exact;
-            color-adjust: exact;
-            print-color-adjust: exact;
-          }
-
-          html, body {
-            width: 80mm;
-            background: #fff;
-            font-family: Arial, Helvetica, sans-serif;
-          }
-
-          .label-page {
-            position: relative;
-            width: 80mm;
-            height: 50mm;
-            page-break-after: always;
-            break-after: page;
-            page-break-inside: avoid;
-            break-inside: avoid;
-            overflow: hidden;
-          }
-
-          /* FIX 2: last-child වෙනුවට last-of-type */
-          .label-page:last-of-type {
-            page-break-after: auto;
-            break-after: auto;
-          }
-
-          .label-container {
-            width: 80mm;
-            height: 50mm;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 3mm 4mm;
-            overflow: hidden;
-          }
-
-          .label-container, .label-container * {
-            color: #000000 !important;
-            font-weight: bold !important;
-          }
-
-          .label-title {
-            font-size: 13px;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 74mm;
-            line-height: 1.2;
-            margin-bottom: 2mm;
-          }
-
-          svg {
-            display: block;
-            width: 90% !important;
-            max-width: 74mm !important;
-            height: auto !important;
-            max-height: 25mm !important;
-            margin: 0 auto;
-          }
-
-          .label-price {
-            font-size: 14px;
-            margin-top: 2mm;
-            text-align: center;
-          }
-
-          @media print {
-            @page {
-              size: 80mm 50mm;  /* FIX 1: මෙතනත් landscape ඉවත් කළා */
-              margin: 0;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        ${allLabels}
-        <script>
-          window.onload = function () {
-            window.onafterprint = function () { window.close(); };
-            window.focus();
-            window.print();
-          };
-        </script>
-      </body>
-    </html>
-  `);
-  w.document.close();
-}
 
   if (loading) return <div style={{ padding: 20 }}>Loading Inventory...</div>;
 
@@ -360,7 +243,7 @@ function printBarcode() {
             Manage your product categories, prices, stock levels and barcodes
           </p>
         </div>
-        
+
         {/* Manager/Admin සඳහා පමණක් Add New Item Button එක පෙන්වයි */}
         {isManager && (
           <button
@@ -521,7 +404,7 @@ function printBarcode() {
         {form && (
           <>
             <h2>{form.id ? 'Edit Item' : 'Add New Item'}</h2>
-            
+
             <div className="grid-2">
               <div className="field">
                 <label>Category</label>
@@ -659,11 +542,11 @@ function printBarcode() {
                   placeholder="0"
                   value={form.stockQty}
                   onChange={(e) => {
-               // Minus (-) ලකුණු සහ අකුරු ඉවත් කර ධන අංක පමණක් ඉතිරි කරයි
-                  const val = e.target.value.replace(/-/g, '');
-                  setForm({ ...form, stockQty: val });
-                }}
-                disabled={!!form.id}
+                    // Minus (-) ලකුණු සහ අකුරු ඉවත් කර ධන අංක පමණක් ඉතිරි කරයි
+                    const val = e.target.value.replace(/-/g, '');
+                    setForm({ ...form, stockQty: val });
+                  }}
+                  disabled={!!form.id}
                 />
               </div>
               <div className="field">
@@ -738,15 +621,45 @@ function printBarcode() {
       </Modal>
 
       {/* Barcode Label Modal */}
-      <Modal open={!!barcodeFor} onClose={() => setBarcodeFor(null)} width={340} align="center">
+      <Modal open={!!barcodeFor} onClose={() => setBarcodeFor(null)} width={400} align="center">
         {barcodeFor && (
           <>
             <h2>{barcodeFor.name}</h2>
             <div style={{ border: '1px solid var(--line)', borderRadius: 8, padding: 10, background: '#fff' }}>
-              <svg ref={svgRef} style={{ width: '100%', height: '80px' }} />
+              <svg ref={svgRef} style={{ display: 'block', width: '100%', height: 'auto', minHeight: 80 }} />
             </div>
             <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>
               Print this label and stick it on the item / shelf
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, textAlign: 'left' }}>
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label>Label width (mm)</label>
+                <input
+                  type="number" min="20" max="120" step="0.5"
+                  value={labelCfg.width}
+                  onChange={(e) => setLabelCfg({ ...labelCfg, width: e.target.value })}
+                />
+              </div>
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label>Label height (mm)</label>
+                <input
+                  type="number" min="20" max="120" step="0.5"
+                  value={labelCfg.height}
+                  onChange={(e) => setLabelCfg({ ...labelCfg, height: e.target.value })}
+                />
+              </div>
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label>Copies</label>
+                <input
+                  type="number" min="1" max="100"
+                  value={labelCopies}
+                  onChange={(e) => setLabelCopies(e.target.value)}
+                />
+              </div>
+            </div>
+            <p style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 6, textAlign: 'left' }}>
+              Width = across the roll, height = along the roll. Use the same size in the printer&apos;s
+              paper settings, and set Margins to &quot;None&quot; in the print window. Saved on this device.
             </p>
             <div className="modal-actions" style={{ justifyContent: 'center' }}>
               <button type="button" className="btn btn-secondary" onClick={() => setBarcodeFor(null)}>Close</button>
